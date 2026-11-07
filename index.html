@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Future Quest — Interactive Quiz</title>
+<style>
+:root{--navy:#233b62;--blue:#dceeff;--pink:#ffe2ed;--ink:#263653;--accent:#6d91c8;--good:#23865b;--bad:#c44e69}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Arial,sans-serif;color:var(--ink);background:linear-gradient(135deg,#eaf5ff,#fff0f5);padding:22px}
+.wrap{max-width:820px;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.pill{background:#fff;border:1px solid #d7e5f6;border-radius:30px;padding:9px 15px;font-weight:700}
+.card{margin:24px auto;background:rgba(255,255,255,.94);border:2px solid #dbe9f8;border-radius:26px;padding:clamp(20px,5vw,38px);box-shadow:0 14px 35px #8aa9c522}
+h1{font-size:clamp(2rem,6vw,3.4rem);margin:12px 0;color:var(--navy)}h2{line-height:1.35}
+.sub{color:#61728e;line-height:1.6}.progress{height:10px;background:#edf2fa;border-radius:20px;overflow:hidden;margin:20px 0}.bar{height:100%;width:0;background:linear-gradient(90deg,#8eb8e9,#e9a9c4);transition:.25s}
+.options{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:24px 0}
+button{font:inherit;cursor:pointer;border:0}.option{background:#f3f8ff;border:2px solid #d9e7f7;border-radius:16px;padding:16px;text-align:left;color:var(--ink);font-weight:700;min-height:66px;transition:.15s}
+.option:hover:not(:disabled){transform:translateY(-2px);border-color:#8baedb;background:#eaf3ff}.option:disabled{cursor:default;opacity:1}
+.option.correct{border-color:var(--good);background:#e5f7ed}.option.wrong{border-color:var(--bad);background:#fff0f2}
+.feedback{padding:14px 16px;border-radius:14px;line-height:1.5;margin:12px 0;display:none}.feedback.show{display:block}.feedback.good{background:#e8f8ef;color:#176642}.feedback.bad{background:#fff0f2;color:#963c53}
+.actions{display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-top:22px}
+.primary{background:var(--navy);color:white;padding:14px 24px;border-radius:30px;font-weight:700}.secondary{background:#fce8f0;color:#8a4560;padding:12px 20px;border-radius:30px;font-weight:700}
+.center{text-align:center}.hidden{display:none}.bigscore{font-size:3.5rem;font-weight:800;color:var(--navy);margin:8px}
+@media(max-width:600px){.options{grid-template-columns:1fr}body{padding:12px}.card{margin:14px auto}}
+</style></head>
+<body><main class="wrap">
+<div class="top"><div class="pill">🌟 SPEAKING 1 · GROUP 8</div><div class="pill" id="scorePill">Score: 0 / 12</div></div>
+<section class="card" id="intro">
+<div class="center"><div style="font-size:3rem">🚀</div><h1>Future Quest</h1><p class="sub">What Should We Do in the Future?</p>
+<p class="sub">12 multiple-choice questions · Choose A, B, C or D · Get instant feedback</p>
+<button class="primary" onclick="startQuiz()">START QUIZ</button></div></section>
+<section class="card hidden" id="quiz">
+<div class="top"><span class="pill" id="round">ROUND 1 · DREAM IT</span><span class="pill" id="counter">Question 1 / 12</span></div>
+<div class="progress"><div class="bar" id="bar"></div></div>
+<h2 id="question"></h2><p class="sub" id="hint"></p>
+<div class="options" id="options"></div><div class="feedback" id="feedback" aria-live="polite"></div>
+<div class="actions"><span class="sub" id="points">Choose one answer.</span><button class="primary" id="next" onclick="nextQuestion()" disabled>Next →</button></div>
+</section>
+<section class="card hidden center" id="result">
+<div style="font-size:3rem">🏆</div><h1>Quest Complete!</h1><div class="bigscore" id="finalScore">0 / 12</div><p id="message" class="sub"></p>
+<p id="details" class="sub"></p><button class="primary" onclick="restart()">PLAY AGAIN</button>
+</section></main>
+<script>
+const qs=[
+{r:"ROUND 1 · DREAM IT",q:"Which job helps people stay healthy and save lives?",h:"Choose the correct job.",o:["A. Doctor","B. Teacher","C. Engineer","D. Designer"],a:0,e:"A doctor cares for patients, helps them stay healthy and saves lives."},
+{r:"ROUND 1 · DREAM IT",q:"Which job teaches and inspires students every day?",h:"Think about a person who works at a school.",o:["A. Pilot","B. Teacher","C. Designer","D. Chef"],a:1,e:"A teacher helps students learn, develop skills and feel inspired."},
+{r:"ROUND 1 · DREAM IT",q:"Which job designs and builds things to solve real problems?",h:"This job often uses logic, maths and teamwork.",o:["A. Singer","B. Nurse","C. Engineer","D. Photographer"],a:2,e:"Engineers use science, maths and creativity to design and build solutions."},
+{r:"ROUND 1 · DREAM IT",q:"Which job creates visual ideas to communicate messages?",h:"Think about creativity and visual thinking.",o:["A. Designer","B. Farmer","C. Dentist","D. Lawyer"],a:0,e:"Designers use creativity and visual thinking to communicate ideas."},
+{r:"ROUND 2 · PLAN IT",q:"You are offered a chance to study abroad for one year. What is the most thoughtful first step?",h:"Choose a responsible way to make a big decision.",o:["A. Accept immediately without thinking","B. Refuse because it is unfamiliar","C. Weigh the pros and cons","D. Let someone else decide everything"],a:2,e:"Thinking about the advantages and disadvantages helps you make an informed decision."},
+{r:"ROUND 2 · PLAN IT",q:"Which is a good reason to study abroad?",h:"Consider learning and personal growth.",o:["A. To avoid all responsibilities","B. To experience a new culture and improve language skills","C. To never study again","D. To spend all your time shopping"],a:1,e:"Studying abroad can build language skills, independence and cultural understanding."},
+{r:"ROUND 2 · PLAN IT",q:"If you are unsure about studying abroad, what could you do?",h:"Choose a helpful next step.",o:["A. Ignore all information","B. Make a decision in a hurry","C. Ask trusted people for advice and research the options","D. Give up on every plan"],a:2,e:"Advice and reliable information can help you compare options carefully."},
+{r:"ROUND 2 · PLAN IT",q:"Which sentence best expresses a future study plan?",h:"Choose the sentence with a clear intention.",o:["A. I might study abroad next year.","B. I studied abroad yesterday.","C. I am study abroad last year.","D. I never learn anything."],a:0,e:"“I might study abroad next year” expresses a possible future plan."},
+{r:"ROUND 3 · CHOOSE IT",q:"How could technology improve our daily lives?",h:"Choose the most balanced answer.",o:["A. By making every decision for us","B. By helping people communicate, learn and work more efficiently","C. By replacing all human relationships","D. By stopping people from learning"],a:1,e:"Technology can support communication, education and productivity when used responsibly."},
+{r:"ROUND 3 · CHOOSE IT",q:"What should robots help people do in the future?",h:"Think about useful and safe applications.",o:["A. Handle repetitive or dangerous tasks","B. Make every personal choice","C. Prevent people from developing skills","D. Replace kindness and friendship"],a:0,e:"Robots can assist with repetitive or hazardous tasks while people remain responsible for important decisions."},
+{r:"ROUND 3 · CHOOSE IT",q:"Which action can help protect the environment?",h:"Choose a practical everyday action.",o:["A. Waste more water","B. Use more single-use plastic","C. Reduce waste, reuse items and recycle","D. Leave lights on all day"],a:2,e:"Reducing, reusing and recycling help conserve resources and reduce waste."},
+{r:"ROUND 3 · CHOOSE IT",q:"Which sentence describes a useful action you can take now for your future?",h:"Choose a realistic action.",o:["A. I will wait and do nothing.","B. I can improve my English by practising every day.","C. Success happens without effort.","D. I do not need any goals."],a:1,e:"Regular practice is a realistic step that can improve your skills and prepare you for the future."}
+];
+let index=0,score=0,answered=false,wrong=[];
+function startQuiz(){document.getElementById('intro').classList.add('hidden');document.getElementById('result').classList.add('hidden');document.getElementById('quiz').classList.remove('hidden');index=0;score=0;wrong=[];render()}
+function render(){answered=false;let q=qs[index];document.getElementById('round').textContent=q.r;document.getElementById('counter').textContent=`Question ${index+1} / ${qs.length}`;document.getElementById('bar').style.width=`${index/qs.length*100}%`;document.getElementById('question').textContent=q.q;document.getElementById('hint').textContent=q.h;document.getElementById('points').textContent='Choose one answer.';document.getElementById('feedback').className='feedback';document.getElementById('feedback').textContent='';document.getElementById('next').disabled=true;document.getElementById('next').textContent=index===qs.length-1?'See my score →':'Next →';document.getElementById('scorePill').textContent=`Score: ${score} / ${qs.length}`;
+let box=document.getElementById('options');box.innerHTML='';q.o.forEach((v,i)=>{let b=document.createElement('button');b.className='option';b.textContent=v;b.onclick=()=>choose(i);box.appendChild(b)})}
+function choose(i){if(answered)return;answered=true;let q=qs[index],buttons=[...document.querySelectorAll('.option')],fb=document.getElementById('feedback');buttons.forEach((b,j)=>{b.disabled=true;if(j===q.a)b.classList.add('correct');if(j===i&&i!==q.a)b.classList.add('wrong')});if(i===q.a){score++;fb.className='feedback show good';fb.textContent='✓ Correct! '+q.e;document.getElementById('points').textContent='+1 point'}else{wrong.push(index+1);fb.className='feedback show bad';fb.textContent='✗ Not quite. Correct answer: '+q.o[q.a]+'. '+q.e;document.getElementById('points').textContent='0 points'}document.getElementById('scorePill').textContent=`Score: ${score} / ${qs.length}`;document.getElementById('next').disabled=false;document.getElementById('bar').style.width=`${(index+1)/qs.length*100}%`}
+function nextQuestion(){if(!answered)return;if(index<qs.length-1){index++;render()}else finish()}
+function finish(){document.getElementById('quiz').classList.add('hidden');document.getElementById('result').classList.remove('hidden');document.getElementById('finalScore').textContent=`${score} / ${qs.length}`;let pct=score/qs.length;document.getElementById('message').textContent=pct===1?'Perfect! You are a Future Quest champion!':pct>=.75?'Excellent work! You have a strong understanding of the topic.':pct>=.5?'Good effort! Review the explanations and try again.':'Keep practising! Every attempt helps you learn.';document.getElementById('details').textContent=`Correct: ${score} · Incorrect: ${qs.length-score} · Accuracy: ${Math.round(pct*100)}%`+(wrong.length?` · Review questions: ${wrong.join(', ')}`:'')}
+function restart(){document.getElementById('result').classList.add('hidden');startQuiz()}
+</script></body></html>
